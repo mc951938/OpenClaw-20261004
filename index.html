@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>To-Do List</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { height:100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: linear-gradient(160deg,#2e1065 0%,#1e0a3c 60%,#170830 100%);
+    color:#f3e8ff; min-height:100vh;
+    display:flex; justify-content:center; padding:24px 12px;
+  }
+  .app { width:100%; max-width:640px; }
+  header { text-align:center; margin-bottom:28px; }
+  h1 { font-size:34px; letter-spacing:2px; margin-bottom:14px; color:#e9d5ff; }
+  #counter {
+    font-size:22px; color:#c4b5fd;
+    background:rgba(168,85,247,0.15);
+    display:inline-block; padding:8px 22px; border-radius:999px;
+    border:1px solid rgba(168,85,247,0.4);
+  }
+  #counter b { color:#a855f7; font-size:24px; }
+
+  .input-row { display:flex; gap:10px; margin-bottom:22px; }
+  #newTodo {
+    flex:1; font-size:22px; padding:14px 18px; border-radius:12px;
+    border:1px solid rgba(196,181,253,0.3); background:rgba(139,92,246,0.12);
+    color:#f3e8ff; outline:none;
+  }
+  #newTodo::placeholder { color:#7e6ba8; }
+  #newTodo:focus { border-color:#a855f7; }
+  #addBtn {
+    font-size:22px; padding:14px 22px; border-radius:12px; border:none;
+    background:#a855f7; color:#fff; font-weight:700; cursor:pointer;
+    transition:background .15s;
+  }
+  #addBtn:active { background:#9333ea; }
+
+  ul { list-style:none; }
+  .item {
+    display:flex; align-items:center; gap:14px;
+    background:rgba(139,92,246,0.10);
+    border:1px solid rgba(196,181,253,0.18);
+    border-radius:12px; padding:16px 14px; margin-bottom:12px;
+    font-size:24px;
+  }
+  .item input[type=checkbox] {
+    width:30px; height:30px; flex-shrink:0;
+    accent-color:#a855f7; cursor:pointer;
+  }
+  .item .text { flex:1; line-height:1.35; word-break:break-word; }
+  .item.done .text { text-decoration:line-through; color:#8b7bb5; }
+  .del {
+    flex-shrink:0; border:none; background:rgba(236,72,153,0.15);
+    color:#f472b6; font-size:22px; line-height:1;
+    width:44px; height:44px; border-radius:10px; cursor:pointer;
+  }
+  .del:active { background:rgba(236,72,153,0.35); }
+
+  #clearDone {
+    margin-top:22px; width:100%; padding:15px; font-size:20px;
+    border-radius:12px; border:1px dashed rgba(196,181,253,0.4);
+    background:transparent; color:#c4b5fd; cursor:pointer;
+  }
+  #clearDone:active { color:#f3e8ff; border-color:#e9d5ff; }
+  .empty { text-align:center; color:#6d5b9e; font-size:20px; padding:30px 0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>📋 To-Do List</h1>
+    <div id="counter"><b id="unc">0</b> incomplete / <b id="tot">0</b> total</div>
+  </header>
+  <div class="input-row">
+    <input id="newTodo" type="text" placeholder="Type a new task…" autocomplete="off">
+    <button id="addBtn">+ Add</button>
+  </div>
+  <ul id="list"></ul>
+  <button id="clearDone">🧹 Clear completed</button>
+</div>
+
+<script>
+const KEY="***";
+let todos=[];
+const $=id=>document.getElementById(id);
+
+function load(){
+  try{ todos=JSON.parse(localStorage.getItem(KEY))||[]; }catch(e){ todos=[]; }
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(todos)); }
+
+function render(){
+  const list=$("list"); list.innerHTML="";
+  if(!todos.length){
+    list.innerHTML='<li class="empty">No tasks yet — add one to get started 📝</li>';
+  }
+  todos.forEach((t,i)=>{
+    const li=document.createElement("li");
+    li.className="item"+(t.done?" done":"");
+    const cb=document.createElement("input");
+    cb.type="checkbox"; cb.checked=t.done;
+    cb.onchange=()=>{ todos[i].done=cb.checked; save(); render(); };
+    const span=document.createElement("span");
+    span.className="text"; span.textContent=t.text;
+    const del=document.createElement("button");
+    del.className="del"; del.textContent="✕"; del.title="Delete";
+    del.onclick=()=>{ todos.splice(i,1); save(); render(); };
+    li.append(cb,span,del);
+    list.appendChild(li);
+  });
+  const total=todos.length;
+  const unc=todos.filter(t=>!t.done).length;
+  $("unc").textContent=unc;
+  $("tot").textContent=total;
+}
+
+function add(){
+  const v=$("newTodo").value.trim();
+  if(!v) return;
+  todos.push({text:v, done:false});
+  $("newTodo").value="";
+  save(); render();
+}
+
+$("addBtn").onclick=add;
+$("newTodo").addEventListener("keydown",e=>{ if(e.key==="Enter") add(); });
+$("clearDone").onclick=()=>{ todos=todos.filter(t=>!t.done); save(); render(); };
+
+load(); render();
+</script>
+</body>
+</html>
